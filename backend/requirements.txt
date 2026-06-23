@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+python-multipart
+opencv-python-headless
+easyocr
+pandas
+openpyxl
+pydantic
+numpy<2.0.0
