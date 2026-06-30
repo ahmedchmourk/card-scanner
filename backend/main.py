@@ -43,26 +43,31 @@ def extract_entities(text_lines):
     }
     
     email_pattern = re.compile(r'[\w\.-]+@[\w\.-]+')
-    phone_pattern = re.compile(r'(\+?\d{1,3}[\s-]?)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}')
     unassigned = []
 
     for line in text_lines:
         line_clean = line.strip()
         
+        # Extract email and clean email prefixes
         emails = email_pattern.findall(line_clean)
         if emails and not entities["Email"]:
             entities["Email"] = emails[0]
             continue
             
-        if sum(c.isdigit() for c in line_clean) >= 8 and not entities["Phone Number"]:
-             entities["Phone Number"] = line_clean
+        # Clean common phone prefixes and check if line is a phone number
+        line_no_phone_prefix = re.sub(r'^(tel|phone|p|m|mobile|t|fax|f|h|mob)\s*[:.-]?\s*', '', line_clean, flags=re.IGNORECASE)
+        if sum(c.isdigit() for c in line_no_phone_prefix) >= 8 and not entities["Phone Number"]:
+             entities["Phone Number"] = line_no_phone_prefix.strip()
              continue
              
+        # Skip web addresses
         if "www." in line_clean.lower() or ".com" in line_clean.lower() or "http" in line_clean.lower():
             continue 
             
         if len(line_clean) > 2:
-            unassigned.append(line_clean)
+            # Clean common label prefixes for names, companies, and addresses
+            cleaned_line = re.sub(r'^(name|company|co|address|addr|location|loc)\s*[:.-]?\s*', '', line_clean, flags=re.IGNORECASE)
+            unassigned.append(cleaned_line.strip())
     
     if len(unassigned) > 0: entities["Name"] = unassigned[0]
     if len(unassigned) > 1: entities["Company"] = unassigned[1]
